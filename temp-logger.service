@@ -1,0 +1,10 @@
+[Unit]
+Description=Room temperature service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python -u /usr/bin/temp-logger.py
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target

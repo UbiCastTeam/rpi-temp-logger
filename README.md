@@ -10,6 +10,8 @@ Tested on Arch Linux
 
 Add the following to /boot/config.txt
 
-```dtoverlay=w1-gpio,gpiopin=4```
+```
+dtoverlay=w1-gpio,gpiopin=4
+```
 
 Put temp-logger.py into /usr/bin, and temp-logger.service into /etc/systemd/system/multi-user.target.wants

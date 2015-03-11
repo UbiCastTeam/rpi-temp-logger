@@ -31,6 +31,10 @@ for line in d.split('\n'):
     fields = line.split(',')
     if len(fields) > 1:
         epoch, temp, outside_temp = float(fields[0]), fields[1], fields[2]
+        if temp == '99999':
+            temp = ''
+        if outside_temp == '99999':
+            outside_temp = ''
         date = datetime.datetime.fromtimestamp(epoch)
         date_gdoc = date.strftime('%Y/%m/%d %H:%M:%S')
         f.write('%s\t%s\t%s\n' %(date_gdoc, temp.replace('.', ','), outside_temp.replace('.', ',')))

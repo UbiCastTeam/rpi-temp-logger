@@ -27,16 +27,30 @@ NOTEMP = 99999
 def gettemp_outside():
     try:
         p = {
-            'lat': '48.819598',
-            'lon': '2.374334699999963',
+            # Latitude-based may change location on the fly
+            #'lat': '48.819598',
+            #'lon': '2.374334699999963',
+            #'q': 'Paris,fr'
             'units': 'metric',
+            'id': '3012621',
         }
+        # See http://openweathermap.org/current
         url = "http://api.openweathermap.org/data/2.5/weather"
-        r = requests.get(url, params=p).json()['main']['temp']
-        return r
+        try:
+            r = requests.get(url, params=p)
+            code = r.status_code
+        except Exception as e:
+            print('Failed to perform request (code: %s):\n%s' %(code, e))
+            return NOTEMP, 'nowhere' 
+        j = r.json()
+        temp = j['main']['temp']
+        loc = j['name']
+        #If your locale is not utf-8
+        #loc = j['name'].encode('utf-8')
+        return temp, loc
     except Exception as e:
-        print('Failed to fetch current outside temperature:\n%s' %e)
-        return NOTEMP 
+        print('Failed to parse current outside temperature:\n%s\nContent: %s' %(e, r.text))
+        return NOTEMP, 'nowhere' 
 
 def gettemp(id):
   try:
@@ -81,7 +95,7 @@ if __name__ == '__main__':
   while True:
     now = time.time()
     temp = gettemp(sensor_id)/float(1000)
-    temp_outside = gettemp_outside()
-    print("Temp of sensor %s : %.2f C, Outside: %s C" %(sensor_id, temp, temp_outside)) 
+    temp_outside, outside_loc = gettemp_outside()
+    print("Temp of sensor %s : %.2f C, Outside: %s C (%s)" %(sensor_id, temp, temp_outside, outside_loc)) 
     write_entry(now, temp, temp_outside)
     time.sleep(interval_s)

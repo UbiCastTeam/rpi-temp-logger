@@ -17,7 +17,26 @@
 #--------------------------------------
 
 from __future__ import print_function
+import requests, json
 import os
+
+csv_path = '/var/tmp/temp.csv'
+interval_s = 60
+NOTEMP = 99999
+
+def gettemp_outside():
+    try:
+        p = {
+            'lat': '48.819598',
+            'lon': '2.374334699999963',
+            'units': 'metric',
+        }
+        url = "http://api.openweathermap.org/data/2.5/weather"
+        r = requests.get(url, params=p).json()['main']['temp']
+        return r
+    except Exception as e:
+        print('Failed to fetch current outside temperature:\n%s' %e)
+        return NOTEMP 
 
 def gettemp(id):
   try:
@@ -31,36 +50,38 @@ def gettemp(id):
       line = f.readline() # read 2nd line
       mytemp = line.rsplit('t=',1)
     else:
-      mytemp = 99999
+      mytemp = NOTEMP 
     f.close()
     return int(mytemp[1])
 
   except:
-    return 99999
+    return NOTEMP 
 
 def get_ids():
     p = '/sys/bus/w1/devices/'
-    ids = list()
-    d = os.listdir(p)
-    for i in d:
-        if "_bus_master" not in i:
-            ids.append(os.path.basename(i))
-    return ids
+    if os.path.isdir(p):
+        ids = list()
+        d = os.listdir(p)
+        for i in d:
+            if "_bus_master" not in i:
+                ids.append(os.path.basename(i))
+        return ids
+    return list()
 
-def write_entry(time, temp):
-    line = "%s,%s\n" %(time, temp)
-    f = open('/var/tmp/temp', 'a')
+def write_entry(time, temp, temp_yahoo):
+    line = "%s,%s,%s\n" %(time, temp, temp_yahoo)
+    f = open(csv_path, 'a')
     f.write(line)
     f.close()
 
 if __name__ == '__main__':
   import time
-  # Script has been called directly
   ids = get_ids()
+  sensor_id = ids[0]
   while True:
-      for i in ids:
-        temp = gettemp(i)/float(1000)
-        now = time.time()
-        print("Temp of sensor %s : %.2f C" %(i, temp)) 
-        write_entry(now, temp)
-        time.sleep(30)
+    now = time.time()
+    temp = gettemp(sensor_id)/float(1000)
+    temp_outside = gettemp_outside()
+    print("Temp of sensor %s : %.2f C, Outside: %s C" %(sensor_id, temp, temp_outside)) 
+    write_entry(now, temp, temp_outside)
+    time.sleep(interval_s)
